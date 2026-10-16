@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Podcasts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Cabeçalho -->
+  <header class="mast">
+    <div class="miolo mast-inner">
+      <a class="logo" href="/">
+        <span class="logo-ponto" aria-hidden="true"></span>
+        Podcasts<span class="logo-sub">catálogo</span>
+      </a>
+      <span class="mast-data" id="data-hoje"></span>
+      <button id="btn-novo" class="btn btn-tinta" type="button">Novo podcast <span aria-hidden="true">+</span></button>
+    </div>
+  </header>
+
+  <main class="miolo">
+
+    <!-- Abertura -->
+    <section class="abertura">
+      <p class="chamada">Gerenciamento de podcasts</p>
+      <h1>Catálogo de <em>podcasts</em></h1>
+      <p class="abertura-texto">Cadastre, consulte, edite e exclua. Tudo fica salvo no banco de dados.</p>
+    </section>
+
+    <!-- Números calculados a partir dos registros do banco -->
+    <section class="numeros">
+      <div class="numero">
+        <strong id="stat-total">0</strong>
+        <span>Podcasts</span>
+      </div>
+      <div class="numero">
+        <strong id="stat-episodios">0</strong>
+        <span>Episódios</span>
+      </div>
+      <div class="numero">
+        <strong id="stat-categorias">0</strong>
+        <span>Categorias</span>
+      </div>
+      <div class="numero">
+        <strong class="numero-texto" id="stat-top">—</strong>
+        <span>Maior catálogo</span>
+      </div>
+    </section>
+
+    <!-- Busca e ordenação -->
+    <section class="ferramentas">
+      <div class="busca">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+        <input type="search" id="busca" placeholder="Procurar por nome, apresentador ou categoria" aria-label="Buscar podcasts">
+      </div>
+      <label class="ordem">
+        <span>Ordenar</span>
+        <select id="ordenar">
+          <option value="recentes">Mais recentes</option>
+          <option value="nome">Nome (A–Z)</option>
+          <option value="episodios">Mais episódios</option>
+        </select>
+      </label>
+    </section>
+
+    <!-- Filtro por categoria -->
+    <nav id="chips" class="abas" aria-label="Filtrar por categoria"></nav>
+
+    <!-- LISTAGEM (Read) -->
+    <div class="lista-cab" aria-hidden="true">
+      <span>ID</span>
+      <span>Podcast</span>
+      <span>Categoria</span>
+      <span>Episódios</span>
+      <span></span>
+    </div>
+    <section id="grid" class="lista"></section>
+
+    <div id="vazio" class="vazio oculto">
+      <h3 id="vazio-titulo">Nada por aqui.</h3>
+      <p id="vazio-texto">Cadastre o primeiro podcast em "Novo podcast".</p>
+    </div>
+  </main>
+
+  <footer class="miolo rodape">
+    <span>Sistema de Podcasts</span>
+    <span>Node.js · Express · MySQL</span>
+  </footer>
+
+  <!-- PAINEL LATERAL: cadastro e edição (Create e Update) -->
+  <div id="modal" class="overlay oculto" role="dialog" aria-modal="true" aria-labelledby="titulo-form">
+    <aside class="painel">
+      <div class="painel-topo">
+        <p class="chamada" id="kicker-form">Novo registro</p>
+        <button type="button" id="btn-fechar" class="link" aria-label="Fechar painel">Fechar ×</button>
+      </div>
+      <h2 id="titulo-form">Novo podcast</h2>
+
+      <form id="form-podcast">
+        <input type="hidden" id="podcast-id">
+
+        <div class="campo">
+          <label for="nome">Nome do podcast</label>
+          <input type="text" id="nome" maxlength="100" placeholder="Ex.: Nerdcast" required>
+        </div>
+
+        <div class="campo">
+          <label for="apresentador">Apresentador</label>
+          <input type="text" id="apresentador" maxlength="100" placeholder="Ex.: Alexandre Ottoni" required>
+        </div>
+
+        <div class="campo">
+          <label for="categoria">Categoria</label>
+          <input type="text" id="categoria" maxlength="50" list="sugestoes" placeholder="Ex.: Tecnologia" required>
+          <datalist id="sugestoes">
+            <option value="Tecnologia">
+            <option value="Humor">
+            <option value="Entrevistas">
+            <option value="Entretenimento">
+            <option value="Educação">
+            <option value="Esportes">
+            <option value="Negócios">
+            <option value="Música">
+          </datalist>
+        </div>
+
+        <p class="dica">Os episódios são cadastrados dentro de cada podcast, no botão "Episódios" da lista.</p>
+
+        <div class="painel-acoes">
+          <button type="button" id="btn-cancelar" class="btn btn-contorno">Cancelar</button>
+          <button type="submit" id="btn-salvar" class="btn btn-tinta">Cadastrar</button>
+        </div>
+      </form>
+    </aside>
+  </div>
+
+  <!-- PAINEL DE EPISÓDIOS: CRUD da tabela "episodios" de um podcast -->
+  <div id="modal-eps" class="overlay oculto" role="dialog" aria-modal="true" aria-labelledby="eps-titulo">
+    <aside class="painel painel-largo">
+      <div class="painel-topo">
+        <p class="chamada" id="eps-kicker">Episódios</p>
+        <button type="button" id="eps-fechar" class="link" aria-label="Fechar painel">Fechar ×</button>
+      </div>
+      <h2 id="eps-titulo">Podcast</h2>
+      <p class="eps-resumo" id="eps-resumo"></p>
+
+      <button type="button" id="eps-novo" class="btn btn-tinta">Novo episódio <span aria-hidden="true">+</span></button>
+
+      <!-- Formulário de episódio (Create e Update) -->
+      <form id="form-episodio" class="form-ep oculto">
+        <input type="hidden" id="ep-id">
+        <p class="chamada" id="ep-form-titulo">Novo episódio</p>
+
+        <div class="ep-linha">
+          <div class="campo campo-num">
+            <label for="ep-numero">Nº</label>
+            <input type="number" id="ep-numero" min="1" required>
+          </div>
+          <div class="campo">
+            <label for="ep-titulo">Título</label>
+            <input type="text" id="ep-titulo" maxlength="150" placeholder="Ex.: Entrevista com..." required>
+          </div>
+        </div>
+
+        <div class="duas">
+          <div class="campo">
+            <label for="ep-duracao">Duração (minutos)</label>
+            <input type="number" id="ep-duracao" min="0" value="0" required>
+          </div>
+          <div class="campo">
+            <label for="ep-data">Data de publicação</label>
+            <input type="date" id="ep-data" required>
+          </div>
+        </div>
+
+        <div class="painel-acoes">
+          <button type="button" id="ep-cancelar" class="btn btn-contorno">Cancelar</button>
+          <button type="submit" id="ep-salvar" class="btn btn-tinta">Cadastrar episódio</button>
+        </div>
+      </form>
+
+      <!-- Listagem (Read) -->
+      <div id="ep-lista" class="ep-lista"></div>
+      <div id="ep-vazio" class="ep-vazio oculto">
+        <h3>Nenhum episódio ainda.</h3>
+        <p>Use "Novo episódio" para cadastrar o primeiro.</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- CONFIRMAÇÃO de exclusão (Delete) -->
+  <div id="modal-excluir" class="overlay overlay-centro oculto" role="dialog" aria-modal="true" aria-labelledby="titulo-excluir">
+    <div class="dialogo">
+      <p class="chamada">Atenção</p>
+      <h2 id="titulo-excluir">Excluir este registro?</h2>
+      <p id="texto-excluir" class="dialogo-texto"></p>
+      <div class="dialogo-acoes">
+        <button type="button" id="btn-nao" class="btn btn-contorno">Cancelar</button>
+        <button type="button" id="btn-sim" class="btn btn-perigo">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensagens de sucesso/erro -->
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
